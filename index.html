@@ -31,6 +31,37 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+        }
+
+        /* Sesli Okuma Butonu */
+        .audio-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .audio-btn:hover {
+            border-color: var(--accent-color);
+            color: #fff;
+            background-color: rgba(88, 166, 255, 0.05);
+        }
+
+        .audio-btn.playing {
+            border-color: #ff7b72;
+            color: #ff7b72;
+            background-color: rgba(255, 123, 114, 0.05);
         }
 
         header {
@@ -38,6 +69,7 @@
             margin-bottom: 40px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 20px;
+            padding-top: 20px;
         }
 
         .logo {
@@ -147,13 +179,18 @@
 <body>
 
     <div class="container">
+        <button class="audio-btn" id="audioBtn" onclick="toggleSpeech()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="audioIcon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <span id="btnText">Sesli Dinle</span>
+        </button>
+
         <header>
             <a href="#" class="logo">Ovyra<span>.ai</span></a>
             <h1>GİZLİLİK POLİTİKASI</h1>
             <p class="date">Son Güncelleme Tarihi: 28 Mayıs 2026</p>
         </header>
 
-        <main>
+        <main id="playableContent">
             <p class="intro">Ovyra.ai olarak kullanıcı gizliliğine önem veriyoruz. Bu gizlilik politikası, platformumuzu kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve nasıl korunduğunu açıklamaktadır.</p>
 
             <section>
@@ -164,7 +201,7 @@
                     <li>Kullanıcı adı</li>
                     <li>Şifrelenmiş giriş bilgileri</li>
                 </ul>
-                <p>Platform, kullanıcıların arama geçmişini saklamaz. Ayrıca çerez (cookie) teknolojisi kullanılmamaktadır.</p>
+                <p style="margin-top: 15px;">Platform, kullanıcıların arama geçmişini saklamaz. Ayrıca çerez (cookie) teknolojisi kullanılmamaktadır.</p>
             </section>
 
             <section>
@@ -208,7 +245,7 @@
                 <p>Gizlilik politikası ile ilgili sorular için:</p>
                 <div class="contact-box">
                     <strong>Destek E-postası:</strong><br>
-                    <a href="mailto:ovyraai+destek@gmail.com">ovyraai+destek@gmail.com</a>
+                    <a href="mailto:ovyraai+privacy@gmail.com">ovyraai+privacy@gmail.com</a>
                 </div>
             </section>
         </main>
@@ -218,5 +255,56 @@
         </footer>
     </div>
 
+    <script>
+        let synth = window.speechSynthesis;
+        let utterance = null;
+        let isPlaying = false;
+
+        function toggleSpeech() {
+            const btn = document.getElementById('audioBtn');
+            const btnText = document.getElementById('btnText');
+            const icon = document.getElementById('audioIcon');
+
+            if (isPlaying) {
+                synth.cancel();
+                isPlaying = false;
+                btn.classList.remove('playing');
+                btnText.innerText = "Sesli Dinle";
+                icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+            } else {
+                const textToRead = document.getElementById('playableContent').innerText;
+                utterance = new SpeechSynthesisUtterance(textToRead);
+                
+                const voices = synth.getVoices();
+                const naturalTurkishVoice = voices.find(voice => 
+                    voice.lang === 'tr-TR' && (voice.name.includes('Google') || voice.name.includes('Natural') || voice.name.includes('Standard-A'))
+                ) || voices.find(voice => voice.lang === 'tr-TR');
+
+                if (naturalTurkishVoice) {
+                    utterance.voice = naturalTurkishVoice;
+                }
+
+                utterance.rate = 1.0;  
+                utterance.pitch = 1.0; 
+
+                utterance.onend = () => {
+                    isPlaying = false;
+                    btn.classList.remove('playing');
+                    btnText.innerText = "Sesli Dinle";
+                    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+                };
+
+                synth.speak(utterance);
+                isPlaying = true;
+                btn.classList.add('playing');
+                btnText.innerText = "Durdur";
+                icon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+            }
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => {};
+        }
+    </script>
 </body>
 </html>
